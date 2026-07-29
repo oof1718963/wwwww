@@ -1,0 +1,41 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:controls="using:LiquidLauncher.Controls">
+
+  <!--
+    Native macOS card: a flat translucent fill with a hairline border, the way
+    NSVisualEffectView-backed panels read in System Settings / Music.app — no
+    acrylic blur stack, no sheen/glow layers. IsGlass=true gets the panel fill
+    + border; IsGlass=false (artwork tiles) is just a clip with no chrome added.
+  -->
+  <ControlTheme x:Key="{x:Type controls:SquircleGlassCard}" TargetType="controls:SquircleGlassCard">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid>
+          <!-- Opaque modal-sheet backing (editor/settings/profile panels) — same
+               near-opaque PopoverBackground used by menus, so content behind can
+               never show through. Checked first since IsSheet panels also have
+               IsGlass=true by default and shouldn't fall through to the faint fill. -->
+          <Border Background="{DynamicResource PopoverBackground}"
+                  BorderBrush="{DynamicResource PopoverBorder}" BorderThickness="1"
+                  IsVisible="{TemplateBinding IsSheet}" />
+
+          <Border Background="{DynamicResource CardFill}" IsVisible="{TemplateBinding IsGlass}" />
+          <Border BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" IsVisible="{TemplateBinding IsGlass}" />
+
+          <!-- Solid mode safety fill so artwork tiles never show an empty clipped rect
+               before their image/color loads. -->
+          <Border Background="{DynamicResource TileFallback}" IsVisible="{TemplateBinding IsGlass, Converter={x:Static controls:BoolNegationConverter.Instance}}" />
+
+          <ContentPresenter Name="PART_ContentPresenter"
+                             Content="{TemplateBinding Content}"
+                             ContentTemplate="{TemplateBinding ContentTemplate}"
+                             Padding="{TemplateBinding Padding}"
+                             HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                             VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </ControlTheme>
+
+</ResourceDictionary>

@@ -1,0 +1,570 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="LiquidLauncher.App"
+             RequestedThemeVariant="Dark">
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://LiquidLauncher/Controls/GlassStyles.axaml" />
+        <ResourceInclude Source="avares://LiquidLauncher/Controls/Icons.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+
+      <ResourceDictionary.ThemeDictionaries>
+
+        <!-- ===================== DARK (default, macOS Tahoe native palette) ===================== -->
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="WindowBackground" Color="#FF242424" />
+          <SolidColorBrush x:Key="SidebarBackground" Color="#FF2B2B2B" />
+
+          <SolidColorBrush x:Key="CardFill" Color="#12FFFFFF" />
+          <SolidColorBrush x:Key="CardFillHover" Color="#1AFFFFFF" />
+          <SolidColorBrush x:Key="CardBorder" Color="#16FFFFFF" />
+
+          <SolidColorBrush x:Key="ControlFill" Color="#14FFFFFF" />
+          <SolidColorBrush x:Key="ControlFillHover" Color="#1FFFFFFF" />
+          <SolidColorBrush x:Key="ControlBorder" Color="#16FFFFFF" />
+
+          <SolidColorBrush x:Key="SeparatorBrush" Color="#14FFFFFF" />
+
+          <SolidColorBrush x:Key="LabelPrimary" Color="#FFFFFFFF" />
+          <SolidColorBrush x:Key="LabelSecondary" Color="#99EBEBF5" />
+          <SolidColorBrush x:Key="LabelTertiary" Color="#5CEBEBF5" />
+
+          <!-- Button.primary's fill is LabelPrimary (white here), so its text needs
+               to stay dark in both themes rather than following LabelPrimary itself. -->
+          <SolidColorBrush x:Key="PrimaryButtonForeground" Color="#FF1D1D1F" />
+
+          <!-- Solid-ish backing for menus/popovers, the way NSMenu/NSPopover render
+               (a near-opaque vibrancy panel) rather than a see-through rectangle. -->
+          <SolidColorBrush x:Key="PopoverBackground" Color="#F22C2C2E" />
+          <SolidColorBrush x:Key="PopoverBorder" Color="#33FFFFFF" />
+          <SolidColorBrush x:Key="MenuItemHover" Color="#0A84FF" />
+
+          <!-- Fallback fill behind artwork tiles before their cover image loads
+               (or if it never does) — was hardcoded dark and stayed dark in Light
+               mode too. -->
+          <SolidColorBrush x:Key="TileFallback" Color="#FF3A3A3C" />
+
+          <!-- Fallback fill behind the big hero/cover art on the Details page before
+               an image is set — was a hardcoded dark gradient that stayed dark (and
+               looked out of place) in Light mode too. -->
+          <LinearGradientBrush x:Key="HeroFallbackArt" StartPoint="0%,0%" EndPoint="100%,100%">
+            <GradientStop Color="#3A3A3C" Offset="0" />
+            <GradientStop Color="#1C1C1E" Offset="1" />
+          </LinearGradientBrush>
+
+          <!-- Scrim under the hero image: previously ended on a hardcoded near-black
+               that didn't quite match the page background behind it, leaving a faint
+               seam where the image met the details panel. Ending on the exact same
+               color as WindowBackground (fully opaque) makes the image dissolve into
+               the page instead of visibly stopping. -->
+          <LinearGradientBrush x:Key="ScrimBottom" StartPoint="0%,0%" EndPoint="0%,100%">
+            <GradientStop Color="#00000000" Offset="0" />
+            <GradientStop Color="#99242424" Offset="0.45" />
+            <GradientStop Color="#FF242424" Offset="1" />
+          </LinearGradientBrush>
+        </ResourceDictionary>
+
+        <!-- ===================== LIGHT (macOS Tahoe light native palette) ===================== -->
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="WindowBackground" Color="#FFF2F2F2" />
+          <SolidColorBrush x:Key="SidebarBackground" Color="#FFE7E7E9" />
+
+          <SolidColorBrush x:Key="CardFill" Color="#0A000000" />
+          <SolidColorBrush x:Key="CardFillHover" Color="#12000000" />
+          <SolidColorBrush x:Key="CardBorder" Color="#14000000" />
+
+          <SolidColorBrush x:Key="ControlFill" Color="#0C000000" />
+          <SolidColorBrush x:Key="ControlFillHover" Color="#16000000" />
+          <SolidColorBrush x:Key="ControlBorder" Color="#14000000" />
+
+          <SolidColorBrush x:Key="SeparatorBrush" Color="#14000000" />
+
+          <SolidColorBrush x:Key="LabelPrimary" Color="#FF1D1D1F" />
+          <SolidColorBrush x:Key="LabelSecondary" Color="#993C3C43" />
+          <SolidColorBrush x:Key="LabelTertiary" Color="#5C3C3C43" />
+
+          <SolidColorBrush x:Key="PrimaryButtonForeground" Color="#FFFFFFFF" />
+
+          <SolidColorBrush x:Key="PopoverBackground" Color="#F2FFFFFF" />
+          <SolidColorBrush x:Key="PopoverBorder" Color="#14000000" />
+          <SolidColorBrush x:Key="MenuItemHover" Color="#0A84FF" />
+
+          <SolidColorBrush x:Key="TileFallback" Color="#FFD1D1D6" />
+
+          <LinearGradientBrush x:Key="HeroFallbackArt" StartPoint="0%,0%" EndPoint="100%,100%">
+            <GradientStop Color="#E4E4E7" Offset="0" />
+            <GradientStop Color="#C7C7CC" Offset="1" />
+          </LinearGradientBrush>
+
+          <LinearGradientBrush x:Key="ScrimBottom" StartPoint="0%,0%" EndPoint="0%,100%">
+            <GradientStop Color="#00000000" Offset="0" />
+            <GradientStop Color="#99F2F2F2" Offset="0.45" />
+            <GradientStop Color="#FFF2F2F2" Offset="1" />
+          </LinearGradientBrush>
+        </ResourceDictionary>
+
+      </ResourceDictionary.ThemeDictionaries>
+
+      <FontFamily x:Key="InterFont">avares://LiquidLauncher/Assets/Fonts#Inter</FontFamily>
+
+      <!-- Colors below don't change between Light/Dark. -->
+
+      <!-- macOS system accent (default blue) -->
+      <SolidColorBrush x:Key="AccentTint" Color="#0A84FF" />
+      <SolidColorBrush x:Key="AccentTintHover" Color="#3395FF" />
+
+      <SolidColorBrush x:Key="DestructiveTint" Color="#FF453A" />
+
+      <!-- Full template replacements for popup presenters, rather than just setting
+           Background/BorderBrush via a Style: if the vendored macOS theme's own
+           control template paints its background directly (not through a
+           TemplateBinding), a plain Setter on the property is silently ignored —
+           which is exactly why menus kept rendering see-through even after that
+           fix. Replacing the template outright removes that ambiguity entirely. -->
+      <ControlTheme x:Key="LLFlyoutPresenterTheme" TargetType="FlyoutPresenter">
+        <Setter Property="Background" Value="{DynamicResource PopoverBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PopoverBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="14" />
+        <Setter Property="Template">
+          <ControlTemplate>
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+              <ContentPresenter Content="{TemplateBinding Content}"
+                                 ContentTemplate="{TemplateBinding ContentTemplate}"
+                                 Padding="{TemplateBinding Padding}" />
+            </Border>
+          </ControlTemplate>
+        </Setter>
+      </ControlTheme>
+
+      <ControlTheme x:Key="LLMenuFlyoutPresenterTheme" TargetType="MenuFlyoutPresenter">
+        <Setter Property="Background" Value="{DynamicResource PopoverBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PopoverBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="Template">
+          <ControlTemplate>
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+              <ScrollViewer>
+                <ItemsPresenter Margin="{TemplateBinding Padding}" />
+              </ScrollViewer>
+            </Border>
+          </ControlTemplate>
+        </Setter>
+      </ControlTheme>
+
+      <ControlTheme x:Key="LLContextMenuTheme" TargetType="ContextMenu">
+        <Setter Property="Background" Value="{DynamicResource PopoverBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource PopoverBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="6" />
+        <Setter Property="Template">
+          <ControlTemplate>
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="{TemplateBinding CornerRadius}">
+              <ScrollViewer>
+                <ItemsPresenter Margin="{TemplateBinding Padding}" />
+              </ScrollViewer>
+            </Border>
+          </ControlTemplate>
+        </Setter>
+      </ControlTheme>
+
+    </ResourceDictionary>
+  </Application.Resources>
+
+  <Application.Styles>
+    <!-- Base fallback theme: MacOSTheme.axaml doesn't cover every control (menus,
+         popups, list boxes among them), and without a base theme underneath, any
+         control it doesn't style falls back to Avalonia's bare unstyled template
+         (no background at all) — which is exactly why menus were rendering
+         see-through. FluentTheme underneath guarantees every control has at least
+         a sane default; MacOSTheme + the overrides below still win on top of it. -->
+    <FluentTheme />
+    <StyleInclude Source="avares://MacOS.Avalonia.Theme/MacOSTheme.axaml" />
+
+    <!-- Shared look for every icon glyph drawn from Controls/Icons.axaml. -->
+    <Style Selector="Path.icon">
+      <Setter Property="Stroke" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="StrokeThickness" Value="1.6" />
+      <Setter Property="StrokeLineCap" Value="Round" />
+      <Setter Property="StrokeJoin" Value="Round" />
+      <Setter Property="Fill" Value="Transparent" />
+      <Setter Property="Stretch" Value="Uniform" />
+      <Setter Property="Width" Value="15" />
+      <Setter Property="Height" Value="15" />
+    </Style>
+    <!-- Filled variants (play triangle, star, sparkles) read better solid. -->
+    <Style Selector="Path.iconFilled">
+      <Setter Property="Fill" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="Stretch" Value="Uniform" />
+      <Setter Property="Width" Value="13" />
+      <Setter Property="Height" Value="13" />
+    </Style>
+
+    <!-- Apply Inter to every control by default -->
+    <Style Selector="TextBlock">
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+      <Setter Property="Background" Value="{DynamicResource ControlFill}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="CaretBrush" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="SelectionBrush" Value="#4D0A84FF" />
+      <Setter Property="Padding" Value="10,7" />
+      <Setter Property="FontSize" Value="13" />
+    </Style>
+    <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="{DynamicResource ControlFillHover}" />
+    </Style>
+    <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="{StaticResource AccentTint}" />
+    </Style>
+    <Style Selector="Button">
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+    </Style>
+    <Style Selector="Window">
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+    </Style>
+
+    <Style Selector="RadioButton.sidebar">
+      <Setter Property="Foreground" Value="{DynamicResource LabelSecondary}" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="Padding" Value="12,9" />
+      <Setter Property="Margin" Value="0,1" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="PART_Root" CornerRadius="6" Padding="{TemplateBinding Padding}" Background="Transparent">
+            <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="RadioButton.sidebar:checked /template/ Border#PART_Root">
+      <Setter Property="Background" Value="{StaticResource AccentTint}" />
+    </Style>
+    <Style Selector="RadioButton.sidebar:checked /template/ ContentPresenter">
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="RadioButton.sidebar:pointerover /template/ Border#PART_Root">
+      <Setter Property="Background" Value="{DynamicResource ControlFillHover}" />
+    </Style>
+
+    <Style Selector="RadioButton.pill">
+      <Setter Property="Foreground" Value="{DynamicResource LabelSecondary}" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="Padding" Value="16,5" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="PART_Root" CornerRadius="6" Padding="{TemplateBinding Padding}" Background="Transparent">
+            <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="RadioButton.pill:checked">
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+    </Style>
+    <Style Selector="RadioButton.pill:pointerover /template/ ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+    </Style>
+
+    <Style Selector="Button.traffic">
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="Button.traffic-red">
+      <Setter Property="Background" Value="#FF5F57" />
+    </Style>
+    <Style Selector="Button.traffic-red:pointerover">
+      <Setter Property="Background" Value="#FF3B30" />
+    </Style>
+    <Style Selector="Button.traffic-yellow">
+      <Setter Property="Background" Value="#FEBC2E" />
+    </Style>
+    <Style Selector="Button.traffic-yellow:pointerover">
+      <Setter Property="Background" Value="#E0A100" />
+    </Style>
+    <Style Selector="Button.traffic-green">
+      <Setter Property="Background" Value="#28C840" />
+    </Style>
+    <Style Selector="Button.traffic-green:pointerover">
+      <Setter Property="Background" Value="#1FA82F" />
+    </Style>
+
+    <Style Selector="Button.iconGhost">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="{DynamicResource LabelSecondary}" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="PART_Root" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}">
+            <ContentPresenter Content="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}"
+                               FontSize="{TemplateBinding FontSize}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="Button.iconGhost:pointerover /template/ ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+    </Style>
+
+    <!-- Buttons below use an explicit template rather than leaning on FluentTheme's default
+         Button ControlTheme: that theme re-asserts its own foreground/opacity per pointer
+         state internally, which was muting our colors (buttons rendering washed-out white).
+         A plain Border + ContentPresenter guarantees exactly the fill/text we set. -->
+    <Style Selector="Button.primary, Button.secondary, Button.destructive">
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="PART_Root"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}">
+            <ContentPresenter Content="{TemplateBinding Content}"
+                               Foreground="{TemplateBinding Foreground}"
+                               FontSize="{TemplateBinding FontSize}"
+                               FontWeight="{TemplateBinding FontWeight}"
+                               FontFamily="{TemplateBinding FontFamily}"
+                               Padding="{TemplateBinding Padding}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+
+    <Style Selector="Button.primary">
+      <Setter Property="Background" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryButtonForeground}" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="16,7" />
+    </Style>
+    <Style Selector="Button.primary:pointerover /template/ Border#PART_Root">
+      <Setter Property="Opacity" Value="0.88" />
+    </Style>
+
+    <Style Selector="Button.secondary">
+      <Setter Property="Background" Value="{DynamicResource ControlFill}" />
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}" />
+      <Setter Property="Padding" Value="16,7" />
+    </Style>
+    <Style Selector="Button.secondary:pointerover /template/ Border#PART_Root">
+      <Setter Property="Background" Value="{DynamicResource ControlFillHover}" />
+    </Style>
+
+    <Style Selector="Button.destructive">
+      <Setter Property="Background" Value="#26FF453A" />
+      <Setter Property="Foreground" Value="{StaticResource DestructiveTint}" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="CornerRadius" Value="7" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="16,7" />
+    </Style>
+    <Style Selector="Button.destructive:pointerover /template/ Border#PART_Root">
+      <Setter Property="Background" Value="#3AFF453A" />
+    </Style>
+
+    <!-- ===================== Menus / popovers ===================== -->
+    <!-- Root cause of menus staying see-through even with the presenter templates
+         below: MainWindow sets TransparencyLevelHint="Transparent" so its own
+         rounded corners can clip properly, and every Popup-hosted control
+         (FlyoutPresenter, MenuFlyoutPresenter, ToolTip, ComboBox dropdown) opens
+         in its own OS-level popup window that inherits that hint from its owner.
+         Without this override the popup window itself composites as transparent
+         underneath our Border, so anything the Border doesn't fully cover (corners,
+         drop shadow area) shows the desktop through it. Forcing popups back to
+         normal opaque compositing fixes that at the source. -->
+    <Style Selector="PopupRoot">
+      <Setter Property="TransparencyLevelHint" Value="None" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+
+    <!-- Native macOS menus (NSMenu) are a near-opaque vibrancy panel with a hairline
+         border and rounded corners — not a transparent box. Assigning Theme directly
+         (rather than just setting Background) guarantees our template wins even if
+         the base theme registers its own implicit ControlTheme for these types. -->
+    <Style Selector="FlyoutPresenter">
+      <Setter Property="Theme" Value="{StaticResource LLFlyoutPresenterTheme}" />
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+    </Style>
+
+    <Style Selector="MenuFlyoutPresenter">
+      <Setter Property="Theme" Value="{StaticResource LLMenuFlyoutPresenterTheme}" />
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+    </Style>
+
+    <!-- ContextMenu isn't used anywhere in this app currently, but styled for
+         completeness in case one gets added later. -->
+    <Style Selector="ContextMenu">
+      <Setter Property="Theme" Value="{StaticResource LLContextMenuTheme}" />
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+    </Style>
+
+    <Style Selector="MenuItem">
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="8,5" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <!-- Setting Background/Foreground directly (rather than reaching into a named
+         template part we can't verify across themes) so whichever ControlTheme is
+         active picks it up via its own TemplateBinding. -->
+    <Style Selector="MenuItem:pointerover">
+      <Setter Property="Background" Value="{DynamicResource MenuItemHover}" />
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="Separator">
+      <Setter Property="Background" Value="{DynamicResource SeparatorBrush}" />
+      <Setter Property="Margin" Value="0,4" />
+    </Style>
+
+    <!-- ===================== ListBox (used inside flyouts, e.g. metadata picker) ===================== -->
+    <Style Selector="ListBox">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="ListBoxItem">
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Padding" Value="8,6" />
+      <Setter Property="Margin" Value="0,1" />
+    </Style>
+    <Style Selector="ListBoxItem:pointerover">
+      <Setter Property="Background" Value="{DynamicResource ControlFillHover}" />
+    </Style>
+    <Style Selector="ListBoxItem:selected">
+      <Setter Property="Background" Value="{DynamicResource MenuItemHover}" />
+    </Style>
+    <!-- The selected-row fill is accent blue in both themes, so its text needs to stay
+         light regardless of theme too — LabelPrimary alone goes near-black on blue in
+         Light mode, which is exactly the kind of "looks fine in Dark, breaks in Light"
+         inconsistency to watch for. -->
+    <Style Selector="ListBoxItem:selected TextBlock">
+      <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="ListBoxItem:selected Path.icon">
+      <Setter Property="Stroke" Value="White" />
+    </Style>
+
+    <!-- ===================== ScrollBar / ComboBox / CheckBox ===================== -->
+    <!-- The vendored MacOSTheme covers these visually in Dark, but several of its
+         state colors (thumb hover/pressed, dropdown popup, check glyph) are fixed
+         rather than theme-variant-aware, so they stayed dark-styled after switching
+         to Light. Re-asserting them here off our own DynamicResource brushes keeps
+         every control consistent in both themes. -->
+    <Style Selector="ScrollBar /template/ Thumb">
+      <Setter Property="Background" Value="{DynamicResource ControlFillHover}" />
+    </Style>
+    <Style Selector="ScrollBar /template/ Thumb:pointerover">
+      <Setter Property="Background" Value="{DynamicResource ControlBorder}" />
+    </Style>
+
+    <Style Selector="ComboBox">
+      <Setter Property="Background" Value="{DynamicResource ControlFill}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}" />
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+      <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+    </Style>
+    <Style Selector="ComboBoxItem:selected">
+      <Setter Property="Background" Value="{DynamicResource MenuItemHover}" />
+    </Style>
+
+    <Style Selector="CheckBox">
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+    </Style>
+    <Style Selector="CheckBox /template/ Border#NormalRectangle">
+      <Setter Property="Background" Value="{DynamicResource ControlFill}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlBorder}" />
+    </Style>
+    <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+      <Setter Property="Background" Value="{StaticResource AccentTint}" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentTint}" />
+    </Style>
+
+    <!-- ===================== Emoji avatar picker ===================== -->
+    <Style Selector="Button.emojiOption">
+      <Setter Property="Width" Value="40" />
+      <Setter Property="Height" Value="40" />
+      <Setter Property="Margin" Value="0,0,6,6" />
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="Background" Value="{DynamicResource ControlFill}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="CornerRadius" Value="20" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="PART_Root" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}">
+            <ContentPresenter Content="{TemplateBinding Content}" FontSize="{TemplateBinding FontSize}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="Button.emojiOption:pointerover /template/ Border#PART_Root">
+      <Setter Property="Background" Value="{DynamicResource ControlFillHover}" />
+    </Style>
+    <Style Selector="Button.emojiOption.selected /template/ Border#PART_Root">
+      <Setter Property="Background" Value="{StaticResource AccentTint}" />
+    </Style>
+
+    <!-- ===================== ToolTip ===================== -->
+    <Style Selector="ToolTip">
+      <Setter Property="Background" Value="{DynamicResource PopoverBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource PopoverBorder}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="Foreground" Value="{DynamicResource LabelPrimary}" />
+      <Setter Property="FontFamily" Value="{StaticResource InterFont}" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+
+  </Application.Styles>
+
+</Application>

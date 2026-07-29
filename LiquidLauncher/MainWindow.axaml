@@ -1,0 +1,656 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:services="using:LiquidLauncher.Services"
+        xmlns:controls="using:LiquidLauncher.Controls"
+        xmlns:models="using:LiquidLauncher.Models"
+        x:Class="LiquidLauncher.MainWindow"
+        Title="Game Launcher"
+        Width="1200" Height="760"
+        MinWidth="900" MinHeight="600"
+        CanResize="True"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        SystemDecorations="BorderOnly"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="52"
+        ExtendClientAreaChromeHints="NoChrome">
+
+  <Window.Resources>
+
+    <!-- Sidebar row: small squircle icon (cover if set, else colored initial) + name.
+         Selection highlight/hover comes from the global ListBoxItem styles in App.axaml. -->
+    <DataTemplate x:Key="SidebarItemTemplate" x:DataType="models:GameEntry">
+      <Grid ColumnDefinitions="26,*,Auto" Margin="2,1">
+        <controls:SquircleGlassCard Grid.Column="0" GlassRadius="7" IsGlass="False" Width="26" Height="26">
+          <Grid>
+            <Border Background="{Binding IconBrush}" />
+            <Image Source="{Binding CoverBitmap}" Stretch="UniformToFill" />
+            <TextBlock Text="{Binding Initial}" FontSize="11" FontWeight="Bold" Foreground="White"
+                       IsVisible="{Binding !HasCover}"
+                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Grid>
+        </controls:SquircleGlassCard>
+        <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12.5" Margin="8,0,0,0"
+                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+        <Path Grid.Column="2" Classes="iconFilled" Data="{StaticResource IconStarFilled}"
+              Width="10" Height="10" Fill="#FF9F0A"
+              VerticalAlignment="Center" Margin="4,0,2,0" IsVisible="{Binding IsFavorite}"
+              ToolTip.Tip="Favorite" />
+      </Grid>
+    </DataTemplate>
+
+    <!-- Non-interactive section label ("Playing (11)", "Favorites (3)", ...). Clicking
+         one of these is reverted in code-behind since it isn't a real selectable row. -->
+    <DataTemplate x:Key="SidebarHeaderTemplate" x:DataType="models:SidebarHeader">
+      <TextBlock Text="{Binding Title}" FontSize="11" FontWeight="Bold"
+                 Foreground="{DynamicResource LabelSecondary}" Margin="6,14,6,4" />
+    </DataTemplate>
+  </Window.Resources>
+
+  <Window.Styles>
+    <!-- Selected sidebar row: white text stays readable against the blue accent fill
+         in both themes, where the default LabelPrimary wouldn't (near-black in Light). -->
+    <Style Selector="ListBox#SidebarList ListBoxItem:selected TextBlock">
+      <Setter Property="Foreground" Value="White" />
+      <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+  </Window.Styles>
+
+  <Border CornerRadius="18" ClipToBounds="True" Background="{DynamicResource WindowBackground}">
+  <Grid>
+    <Grid RowDefinitions="52,*">
+
+      <!-- ===================== TOP BAR ===================== -->
+      <Border Grid.Row="0" Background="{DynamicResource SidebarBackground}"
+              BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="0,0,0,1"
+              PointerPressed="TitleBar_PointerPressed">
+        <Grid Margin="94,0,20,0">
+
+          <!-- Sidebar toggle + Add Game, left side (clear of the traffic-light strip). -->
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Spacing="4">
+            <Button Name="SidebarToggleButton" Click="SidebarToggle_Click" Classes="iconGhost"
+                    Width="26" Height="26" CornerRadius="13" ToolTip.Tip="Toggle sidebar">
+              <Path Classes="icon" Data="{StaticResource IconSidebar}" Width="14" Height="14" />
+            </Button>
+            <Button Name="AddGameButton" Click="AddGame_Click" Classes="iconGhost"
+                    Width="26" Height="26" CornerRadius="13" ToolTip.Tip="Add a game">
+              <Path Classes="icon" Data="{StaticResource IconPlus}" Width="13" Height="13" />
+            </Button>
+            <Button Name="ScanGamesButton" Click="ScanGames_Click" Classes="iconGhost"
+                    Width="26" Height="26" CornerRadius="13" ToolTip.Tip="Scan for installed games">
+              <Path Classes="icon" Data="{StaticResource IconSearch}" Width="13" Height="13" />
+            </Button>
+          </StackPanel>
+
+          <!-- Avatar / account menu. -->
+          <Button Name="AvatarButton" HorizontalAlignment="Right" VerticalAlignment="Center"
+                  Padding="0" Width="26" Height="26" CornerRadius="13"
+                  Background="Transparent" BorderThickness="0">
+            <Button.Styles>
+              <Style Selector="Button:pointerover /template/ ContentPresenter">
+                <Setter Property="Opacity" Value="0.85" />
+              </Style>
+            </Button.Styles>
+            <Grid Width="26" Height="26">
+              <Ellipse Width="26" Height="26">
+                <Ellipse.Fill>
+                  <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                    <GradientStop Color="#0A84FF" Offset="0" /><GradientStop Color="#0058C8" Offset="1" />
+                  </LinearGradientBrush>
+                </Ellipse.Fill>
+              </Ellipse>
+              <TextBlock Name="TopBarAvatarInitial" Text="P" FontSize="11" FontWeight="Bold" Foreground="White"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <TextBlock Name="TopBarAvatarEmoji" Text="🙂" FontSize="13" IsVisible="False"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+              <Image Name="TopBarAvatarMemoji" Width="26" Height="26" Stretch="UniformToFill" IsVisible="False">
+                <Image.Clip>
+                  <EllipseGeometry Rect="0,0,26,26" />
+                </Image.Clip>
+              </Image>
+            </Grid>
+            <Button.Flyout>
+              <MenuFlyout Placement="BottomEdgeAlignedRight">
+                <MenuItem Header="Profile" Click="OpenProfile_Click" />
+                <MenuItem Header="Settings" Click="OpenSettings_Click" />
+              </MenuFlyout>
+            </Button.Flyout>
+          </Button>
+
+        </Grid>
+      </Border>
+
+      <!-- ===================== SIDEBAR + DETAIL PANE ===================== -->
+      <!-- Persistent two-pane layout (sidebar list on the left always drives the
+           detail pane on the right) rather than separate Home/Library tabs and a
+           full-screen game page — this is the native macOS "Games.app" pattern. -->
+      <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+
+        <!-- ===== SIDEBAR ===== -->
+        <!-- Column is Auto-width and just follows this Border's own Width, so animating
+             Width (240 <-> 0 in code-behind) is what actually collapses/expands it. -->
+        <Border Name="SidebarPane" Grid.Column="0" Width="240" Background="{DynamicResource SidebarBackground}"
+                BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="0,0,1,0"
+                ClipToBounds="True">
+          <Border.Transitions>
+            <Transitions>
+              <DoubleTransition Property="Width" Duration="0:0:0.2" Easing="CubicEaseOut" />
+            </Transitions>
+          </Border.Transitions>
+          <Grid RowDefinitions="Auto,*" Width="240" HorizontalAlignment="Left">
+
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="12,14,12,8">
+              <Grid Grid.Column="0">
+                <TextBox Name="SearchBox" Watermark="Search" CornerRadius="17" Height="34"
+                          TextChanged="SearchBox_TextChanged" Padding="14,0" VerticalContentAlignment="Center" />
+              </Grid>
+
+              <!-- "Group by" menu — single filter glyph, no more double-icon stack. -->
+              <Button Grid.Column="1" Name="GroupByButton" Classes="iconGhost"
+                      Width="34" Height="34" CornerRadius="17" Margin="8,0,0,0"
+                      Background="{DynamicResource ControlFill}"
+                      ToolTip.Tip="Group games by...">
+                <Path Classes="icon" Data="{StaticResource IconFilter}" Width="14" Height="14" StrokeJoin="Round" />
+                <Button.Flyout>
+                  <MenuFlyout Placement="BottomEdgeAlignedRight">
+                    <MenuItem Header="Group by Status" Click="GroupByStatus_Click" />
+                    <MenuItem Header="Group by Platform" Click="GroupByPlatform_Click" />
+                    <MenuItem Header="Group by Rating" Click="GroupByRating_Click" />
+                    <MenuItem Header="Don't Group (A–Z)" Click="GroupByNone_Click" />
+                  </MenuFlyout>
+                </Button.Flyout>
+              </Button>
+            </Grid>
+
+            <ScrollViewer Grid.Row="1">
+              <StackPanel Margin="10,0,10,14" Spacing="4">
+                <TextBlock Name="SidebarEmptyText" Text="No games yet." FontSize="12"
+                           Foreground="{DynamicResource LabelSecondary}" Margin="6,4" IsVisible="False" />
+                <ListBox Name="SidebarList" SelectionChanged="SidebarList_SelectionChanged">
+                  <ListBox.DataTemplates>
+                    <StaticResource ResourceKey="SidebarItemTemplate" />
+                    <StaticResource ResourceKey="SidebarHeaderTemplate" />
+                  </ListBox.DataTemplates>
+                </ListBox>
+              </StackPanel>
+            </ScrollViewer>
+          </Grid>
+        </Border>
+
+        <!-- ===== DETAIL PANE ===== -->
+        <Grid Grid.Column="1" Background="Transparent">
+
+          <!-- Empty-state prompt, shown only when the library has no games at all. -->
+          <StackPanel Name="EmptyStateView" IsVisible="False" HorizontalAlignment="Center"
+                      VerticalAlignment="Center" Spacing="10" MaxWidth="320">
+            <TextBlock Text="No Games Yet" FontSize="20" FontWeight="Bold"
+                       Foreground="{DynamicResource LabelPrimary}" HorizontalAlignment="Center" />
+            <TextBlock Text="Add a shortcut or .exe to build your library." FontSize="13"
+                       Foreground="{DynamicResource LabelSecondary}" HorizontalAlignment="Center"
+                       TextWrapping="Wrap" TextAlignment="Center" />
+            <Button Click="AddGame_Click" Classes="primary" HorizontalAlignment="Center" Margin="0,6,0,0">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Path Classes="icon" Data="{StaticResource IconPlus}" Width="11" Height="11" Stroke="{DynamicResource PrimaryButtonForeground}" />
+                <TextBlock Text="Add Game" />
+              </StackPanel>
+            </Button>
+            <Button Click="ScanGames_Click" Classes="secondary" HorizontalAlignment="Center">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <Path Classes="icon" Data="{StaticResource IconSearch}" Width="11" Height="11" />
+                <TextBlock Text="Scan for Games" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+
+          <!-- Selected game, shown whenever the library isn't empty. -->
+          <Grid Name="DetailPaneContent" RowDefinitions="44,*" IsVisible="False">
+
+            <!-- Slim title bar over the hero art, matching the reference app's layout. -->
+            <Border Grid.Row="0" Background="{DynamicResource SidebarBackground}"
+                    BorderBrush="{DynamicResource SeparatorBrush}" BorderThickness="0,0,0,1"
+                    PointerPressed="TitleBar_PointerPressed">
+              <TextBlock Name="DetailHeaderTitle" Text="Game name" FontSize="13" FontWeight="SemiBold"
+                         Foreground="{DynamicResource LabelPrimary}" VerticalAlignment="Center" Margin="20,0" />
+            </Border>
+
+            <ScrollViewer Grid.Row="1">
+              <StackPanel Spacing="0">
+
+                <Grid Height="380">
+                  <Border Background="{DynamicResource HeroFallbackArt}" Name="DetailHeroFallback" />
+                  <Image Name="DetailHeroImage" Stretch="UniformToFill" />
+                  <Border Background="{DynamicResource ScrimBottom}" Height="300" VerticalAlignment="Bottom" />
+
+                  <!-- Apple Arcade-style banner overlay: eyebrow + big title sit
+                       directly on the artwork instead of in plain text below it. -->
+                  <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                              Margin="32,0,32,24" Spacing="6" MaxWidth="640">
+                    <TextBlock Name="DetailHeroEyebrow" Text="PLAYING" FontSize="12" FontWeight="Bold"
+                               Foreground="#0A84FF" />
+                    <TextBlock Name="DetailHeroTitle" Text="Game name" FontSize="32" FontWeight="Bold"
+                               Foreground="White" TextWrapping="Wrap" LineHeight="36" />
+                  </StackPanel>
+                </Grid>
+
+                <StackPanel Margin="32,22,32,28" Spacing="16">
+
+                  <Grid ColumnDefinitions="Auto,Auto,*">
+                    <Button Grid.Column="0" Click="PlaySelected_Click" Classes="primary" CornerRadius="20" Padding="20,9">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <Path Classes="iconFilled" Data="{StaticResource IconPlayFilled}" Width="11" Height="11" Fill="{DynamicResource PrimaryButtonForeground}" />
+                        <TextBlock Text="Play" />
+                      </StackPanel>
+                    </Button>
+                    <Button Grid.Column="1" Click="EditSelected_Click" Classes="iconGhost secondary"
+                            Width="34" Height="34" FontSize="14" CornerRadius="17" Margin="8,0,0,0"
+                            Background="{DynamicResource ControlFill}" ToolTip.Tip="Edit game details">
+                      <Path Classes="icon" Data="{StaticResource IconPencil}" Width="15" Height="15" />
+                    </Button>
+
+                    <!-- Five-star rating, clickable, persisted on GameEntry.Rating. -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2"
+                                HorizontalAlignment="Right" VerticalAlignment="Center">
+                      <Path Name="Star1" Classes="iconFilled" Data="{StaticResource IconStarFilled}" Width="17" Height="17" PointerPressed="Star_PointerPressed" Tag="1" Cursor="Hand" />
+                      <Path Name="Star2" Classes="iconFilled" Data="{StaticResource IconStarFilled}" Width="17" Height="17" PointerPressed="Star_PointerPressed" Tag="2" Cursor="Hand" />
+                      <Path Name="Star3" Classes="iconFilled" Data="{StaticResource IconStarFilled}" Width="17" Height="17" PointerPressed="Star_PointerPressed" Tag="3" Cursor="Hand" />
+                      <Path Name="Star4" Classes="iconFilled" Data="{StaticResource IconStarFilled}" Width="17" Height="17" PointerPressed="Star_PointerPressed" Tag="4" Cursor="Hand" />
+                      <Path Name="Star5" Classes="iconFilled" Data="{StaticResource IconStarFilled}" Width="17" Height="17" PointerPressed="Star_PointerPressed" Tag="5" Cursor="Hand" />
+                    </StackPanel>
+                  </Grid>
+
+
+                  <TextBlock Name="DetailDescriptionText" Text="" FontSize="13"
+                             Foreground="{DynamicResource LabelSecondary}" TextWrapping="Wrap" LineHeight="19" />
+
+                  <Border Background="{DynamicResource SeparatorBrush}" Height="1" Margin="0,4" />
+
+                  <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto" Margin="0,0,0,-4">
+                    <StackPanel Grid.Row="0" Grid.Column="0" Spacing="3" Margin="0,0,0,14">
+                      <TextBlock Text="Last Played" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource LabelSecondary}" />
+                      <TextBlock Name="DetailLastPlayedText" Text="Never" FontSize="12.5" Foreground="{DynamicResource LabelPrimary}" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="1" Spacing="3" Margin="0,0,0,14">
+                      <TextBlock Text="Status" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource LabelSecondary}" />
+                      <TextBlock Name="DetailStatusText" Text="Backlog" FontSize="12.5" Foreground="{DynamicResource LabelPrimary}" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="2" Spacing="3" Margin="0,0,0,14">
+                      <TextBlock Text="Platform" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource LabelSecondary}" />
+                      <TextBlock Name="DetailPlatformText" Text="—" FontSize="12.5" Foreground="{DynamicResource LabelPrimary}" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="0" Spacing="3">
+                      <TextBlock Text="Release Date" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource LabelSecondary}" />
+                      <TextBlock Name="DetailReleaseDateText" Text="—" FontSize="12.5" Foreground="{DynamicResource LabelPrimary}" />
+                    </StackPanel>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Spacing="3">
+                      <TextBlock Text="Genre" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource LabelSecondary}" />
+                      <TextBlock Name="DetailGenreText" Text="—" FontSize="12.5" Foreground="{DynamicResource LabelPrimary}" />
+                    </StackPanel>
+                  </Grid>
+
+                </StackPanel>
+              </StackPanel>
+            </ScrollViewer>
+          </Grid>
+        </Grid>
+      </Grid>
+    </Grid>
+
+    <!-- ===================== DETAILS OVERLAY ===================== -->
+    <!-- Styled after the macOS Games app detail card: full-bleed background art with a
+         bottom scrim, cover thumbnail + title/meta row over it, then editable fields
+         below. Background and cover art are edited independently. -->
+    <Border Name="DetailsOverlay" IsVisible="False" Background="#B3000000"
+            PointerPressed="DetailsBackdrop_PointerPressed">
+      <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+        <controls:SquircleGlassCard GlassRadius="16" IsSheet="True" Width="560" MaxHeight="680"
+                                     PointerPressed="DetailsPanel_PointerPressed">
+          <ScrollViewer>
+            <StackPanel Spacing="0">
+
+              <!-- Background art header -->
+              <Grid Height="220">
+                <Border Background="{DynamicResource HeroFallbackArt}" Name="DetailBackgroundFallback" />
+                <Image Name="DetailBackgroundImage" Stretch="UniformToFill" />
+                <Border Background="{DynamicResource ScrimBottom}" />
+
+                <Button Click="CancelDetails_Click" Classes="iconGhost"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="14"
+                        Width="26" Height="26" Background="#59000000" CornerRadius="13">
+                  <Path Classes="icon" Data="{StaticResource IconXmark}" Width="11" Height="11" Stroke="White" />
+                </Button>
+
+                <Button Content="Change Background" Click="ChangeBackground_Click"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,16,50,0"
+                        Padding="12,6" FontSize="11.5" Background="#59000000" Foreground="White"
+                        CornerRadius="7" BorderThickness="0" />
+
+                <!-- Cover + title/meta, sitting on the scrim like the reference screenshot -->
+                <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Bottom" Margin="20,0,20,16">
+                  <Grid Grid.Column="0" Width="84" Height="112" Margin="0,0,14,0">
+                    <controls:SquircleGlassCard GlassRadius="8" IsGlass="False" Width="84" Height="112">
+                      <Grid>
+                        <Border Background="#5E5CE6" Name="DetailCoverFallback" />
+                        <Image Name="DetailCoverImage" Stretch="UniformToFill" />
+                      </Grid>
+                    </controls:SquircleGlassCard>
+                    <Button Content="Edit" Click="ChangeCover_Click" HorizontalAlignment="Center"
+                            VerticalAlignment="Bottom" Margin="0,0,0,4" Padding="8,3" FontSize="9.5"
+                            Background="#99000000" Foreground="White" CornerRadius="5" BorderThickness="0" />
+                  </Grid>
+                  <StackPanel Grid.Column="1" VerticalAlignment="Bottom" Spacing="2">
+                    <TextBlock Name="DetailHeaderName" Text="Game name" FontSize="19" FontWeight="Bold" Foreground="White" />
+                    <TextBlock Name="DetailHeaderMeta" Text="Not Played · PC (Windows)" FontSize="11.5" Foreground="#CCFFFFFF" />
+                  </StackPanel>
+                </Grid>
+              </Grid>
+
+              <StackPanel Margin="20,16,20,20" Spacing="14">
+
+                <Grid ColumnDefinitions="Auto,*" Margin="0,0,0,2">
+                  <Button Grid.Column="1" Click="PlayFromDetails_Click" HorizontalAlignment="Left" IsDefault="True">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <Path Classes="iconFilled" Data="{StaticResource IconPlayFilled}" Width="10" Height="10" />
+                      <TextBlock Text="Play" />
+                    </StackPanel>
+                  </Button>
+                </Grid>
+
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Name" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+                  <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0" Name="DetailName" Watermark="Game name" TextChanged="DetailHeader_TextChanged" />
+                    <Button Grid.Column="1" Name="AutoFillButton" Click="AutoFillMetadata_Click"
+                            Margin="8,0,0,0" Padding="12,7" FontSize="12">
+                      <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Path Classes="iconFilled" Data="{StaticResource IconSparkles}" Width="12" Height="12" />
+                        <TextBlock Text="Auto-Fill" />
+                      </StackPanel>
+                      <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedRight">
+                          <StackPanel Width="320" Spacing="6">
+                            <TextBlock Text="Pick a match" FontSize="12" FontWeight="SemiBold" />
+                            <ListBox Name="MetadataResultsList" MaxHeight="280" SelectionChanged="MetadataResultsList_SelectionChanged">
+                              <ListBox.ItemTemplate>
+                                <DataTemplate DataType="services:GameMetadataCandidate">
+                                  <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontSize="13" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                    <Border Grid.Column="1" Background="{DynamicResource ControlFill}" CornerRadius="4" Padding="6,2" VerticalAlignment="Center" Margin="8,0,0,0">
+                                      <TextBlock Text="{Binding Source}" FontSize="10" Foreground="{DynamicResource LabelSecondary}" />
+                                    </Border>
+                                  </Grid>
+                                </DataTemplate>
+                              </ListBox.ItemTemplate>
+                            </ListBox>
+                          </StackPanel>
+                        </Flyout>
+                      </Button.Flyout>
+                    </Button>
+                  </Grid>
+                  <TextBlock Name="AutoFillStatus" Text="" FontSize="11" Foreground="{DynamicResource LabelSecondary}"
+                             IsVisible="False" />
+                </StackPanel>
+
+                <Grid ColumnDefinitions="*,12,*">
+                  <StackPanel Grid.Column="0" Spacing="4">
+                    <TextBlock Text="Genre" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+                    <TextBox Name="DetailGenre" Watermark="e.g. Action, Puzzle, RPG" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="4">
+                    <TextBlock Text="Release Date" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+                    <TextBox Name="DetailReleaseDate" Watermark="e.g. 17/11/2009" TextChanged="DetailHeader_TextChanged" />
+                  </StackPanel>
+                </Grid>
+
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Platform" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+                  <TextBox Name="DetailPlatform" Watermark="e.g. PC (Windows)" TextChanged="DetailHeader_TextChanged" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Description" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+                  <TextBox Name="DetailDescription" Watermark="What is this game about?"
+                            AcceptsReturn="True" TextWrapping="Wrap" Height="64" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Notes" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+                  <TextBox Name="DetailNotes" Watermark="Personal notes"
+                            AcceptsReturn="True" TextWrapping="Wrap" Height="64" />
+                </StackPanel>
+
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,4,0,0">
+                  <Button Grid.Column="0" Content="Remove Game" Click="RemoveGame_Click" Foreground="{DynamicResource DestructiveTint}" />
+                  <Button Grid.Column="2" Content="Cancel" Click="CancelDetails_Click" Margin="0,0,8,0" />
+                  <Button Grid.Column="3" Content="Save" Click="SaveDetails_Click" IsDefault="True" />
+                </Grid>
+
+              </StackPanel>
+            </StackPanel>
+          </ScrollViewer>
+        </controls:SquircleGlassCard>
+      </Grid>
+    </Border>
+
+    <!-- ===================== SETTINGS OVERLAY ===================== -->
+    <Border Name="SettingsOverlay" IsVisible="False" Background="#B3000000"
+            PointerPressed="SettingsBackdrop_PointerPressed">
+      <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+        <controls:SquircleGlassCard GlassRadius="16" IsSheet="True" Width="380"
+                                     PointerPressed="SettingsPanel_PointerPressed">
+          <StackPanel Margin="22,20,22,22" Spacing="18">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="Settings" FontSize="17" FontWeight="Bold"
+                         Foreground="{DynamicResource LabelPrimary}" />
+              <Button Grid.Column="1" Click="CloseSettings_Click" Classes="iconGhost"
+                      Width="24" Height="24" CornerRadius="12">
+                <Path Classes="icon" Data="{StaticResource IconXmark}" Width="10" Height="10" />
+              </Button>
+            </Grid>
+
+            <StackPanel Spacing="8">
+              <TextBlock Text="Appearance" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+              <controls:SquircleGlassCard GlassRadius="8" Height="32" Width="200" HorizontalAlignment="Left">
+                <Grid Name="ThemeToggleGrid" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                  <Border Name="ThemeIndicator" Background="{DynamicResource ControlFillHover}" CornerRadius="6"
+                          HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="97" Margin="3">
+                    <Border.Transitions>
+                      <Transitions>
+                        <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut" />
+                      </Transitions>
+                    </Border.Transitions>
+                  </Border>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                    <RadioButton Name="ThemeDarkOption" Content="Dark" Classes="pill" Width="100"
+                                 HorizontalContentAlignment="Center" Checked="ThemeOption_Checked" />
+                    <RadioButton Name="ThemeLightOption" Content="Light" Classes="pill" Width="100"
+                                 HorizontalContentAlignment="Center" Checked="ThemeOption_Checked" />
+                  </StackPanel>
+                </Grid>
+              </controls:SquircleGlassCard>
+            </StackPanel>
+          </StackPanel>
+        </controls:SquircleGlassCard>
+      </Grid>
+    </Border>
+
+    <!-- ===================== PROFILE OVERLAY ===================== -->
+    <Border Name="ProfileOverlay" IsVisible="False" Background="#B3000000"
+            PointerPressed="ProfileBackdrop_PointerPressed">
+      <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+        <controls:SquircleGlassCard GlassRadius="16" IsSheet="True" Width="340"
+                                     PointerPressed="ProfilePanel_PointerPressed">
+          <StackPanel Margin="22,24,22,22" Spacing="16" HorizontalAlignment="Center">
+
+            <Grid Width="100">
+              <Grid Width="72" Height="72" HorizontalAlignment="Center">
+                <Ellipse Width="72" Height="72">
+                  <Ellipse.Fill>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                      <GradientStop Color="#0A84FF" Offset="0" /><GradientStop Color="#0058C8" Offset="1" />
+                    </LinearGradientBrush>
+                  </Ellipse.Fill>
+                </Ellipse>
+                <TextBlock Name="ProfileAvatarInitial" Text="P" FontSize="26" FontWeight="Bold"
+                           Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <TextBlock Name="ProfileAvatarEmoji" Text="🙂" FontSize="34" IsVisible="False"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Image Name="ProfileAvatarMemoji" Width="72" Height="72" Stretch="UniformToFill" IsVisible="False">
+                  <Image.Clip>
+                    <EllipseGeometry Rect="0,0,72,72" />
+                  </Image.Clip>
+                </Image>
+              </Grid>
+
+              <!-- Small edit badge on the avatar, same affordance as macOS's "camera"
+                   badge on the account picture in System Settings. -->
+              <Button Name="EditAvatarButton" Click="EditAvatarBadge_Click" Classes="iconGhost"
+                      HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,-30,0"
+                      Width="24" Height="24" CornerRadius="12"
+                      Background="{DynamicResource ControlFillHover}"
+                      BorderBrush="{DynamicResource PopoverBackground}" BorderThickness="2"
+                      ToolTip.Tip="Change avatar">
+                <Path Classes="icon" Data="{StaticResource IconPencil}" Width="10" Height="10" />
+              </Button>
+
+              <Button Click="CloseProfile_Click" Classes="iconGhost"
+                      HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-8,-8,0"
+                      Width="22" Height="22" Background="{DynamicResource ControlFill}" CornerRadius="11">
+                <Path Classes="icon" Data="{StaticResource IconXmark}" Width="9" Height="9" />
+              </Button>
+            </Grid>
+
+            <!-- ===== VIEW MODE: just the name + an "Edit Profile" entry point ===== -->
+            <StackPanel Name="ProfileViewSection" Spacing="12" HorizontalAlignment="Center">
+              <TextBlock Name="ProfileNameText" Text="Player" FontSize="16" FontWeight="SemiBold"
+                         Foreground="{DynamicResource LabelPrimary}" HorizontalAlignment="Center" />
+              <Button Content="Edit Profile" Classes="secondary" Click="EditAvatarBadge_Click"
+                      HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- ===== EDIT MODE: name field + Letter/Memoji picker ===== -->
+            <StackPanel Name="ProfileEditSection" Spacing="16" IsVisible="False" Width="280">
+
+              <StackPanel Spacing="4">
+                <TextBlock Text="Name" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+                <TextBox Name="ProfileNameBox" Watermark="Your name" Text="Player"
+                          TextChanged="ProfileNameBox_TextChanged" />
+              </StackPanel>
+
+              <StackPanel Spacing="8">
+                <TextBlock Text="Avatar" FontSize="11" Foreground="{DynamicResource LabelSecondary}" />
+                <controls:SquircleGlassCard GlassRadius="8" Height="32" Width="220" HorizontalAlignment="Left">
+                  <Grid Name="AvatarKindToggleGrid" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                    <Border Name="AvatarKindIndicator" Background="{DynamicResource ControlFillHover}" CornerRadius="6"
+                            HorizontalAlignment="Left" VerticalAlignment="Stretch" Width="70" Margin="3">
+                      <Border.Transitions>
+                        <Transitions>
+                          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut" />
+                        </Transitions>
+                      </Border.Transitions>
+                    </Border>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                      <RadioButton Name="AvatarKindInitialOption" Content="Letter" Classes="pill" Width="73"
+                                   HorizontalContentAlignment="Center" Checked="AvatarKindOption_Checked" />
+                      <RadioButton Name="AvatarKindEmojiOption" Content="Emoji" Classes="pill" Width="73"
+                                   HorizontalContentAlignment="Center" Checked="AvatarKindOption_Checked" />
+                      <RadioButton Name="AvatarKindMemojiOption" Content="Memoji" Classes="pill" Width="74"
+                                   HorizontalContentAlignment="Center" Checked="AvatarKindOption_Checked" />
+                    </StackPanel>
+                  </Grid>
+                </controls:SquircleGlassCard>
+              </StackPanel>
+
+              <!-- Emoji picker, shown only in Memoji mode — a lightweight stand-in for
+                   Apple's full Memoji creator, letting you pick a face instead of typing
+                   a letter avatar. -->
+              <WrapPanel Name="EmojiPickerPanel" IsVisible="False" Margin="0,-6,0,0">
+                <Button Classes="emojiOption" Content="🙂" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="😎" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="🤖" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="👾" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="🐱" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="🐶" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="🦊" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="🐼" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="🦁" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="🐸" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="👽" Click="EmojiOption_Click" />
+                <Button Classes="emojiOption" Content="🎮" Click="EmojiOption_Click" />
+              </WrapPanel>
+
+              <!-- Memoji picker, shown only in Memoji mode — previews the Tapback
+                   avatar for the current seed, with a Shuffle button to reroll it. -->
+              <StackPanel Name="MemojiPickerPanel" IsVisible="False" Orientation="Vertical"
+                          Spacing="10" HorizontalAlignment="Center" Margin="0,-6,0,0">
+                <Grid Width="64" Height="64">
+                  <Ellipse Width="64" Height="64" Fill="{DynamicResource ControlFillHover}" />
+                  <Image Name="MemojiPickerPreview" Width="64" Height="64" Stretch="UniformToFill">
+                    <Image.Clip>
+                      <EllipseGeometry Rect="0,0,64,64" />
+                    </Image.Clip>
+                  </Image>
+                </Grid>
+                <Button Content="Shuffle" Classes="secondary" Click="ShuffleMemoji_Click" HorizontalAlignment="Center" />
+              </StackPanel>
+
+              <Button Content="Done" Classes="primary" Click="DoneEditingProfile_Click" HorizontalAlignment="Center" />
+            </StackPanel>
+
+          </StackPanel>
+        </controls:SquircleGlassCard>
+      </Grid>
+    </Border>
+
+    <!-- ===================== SCAN FOR GAMES OVERLAY ===================== -->
+    <Border Name="ScanOverlay" IsVisible="False" Background="#B3000000"
+            PointerPressed="ScanBackdrop_PointerPressed">
+      <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+        <controls:SquircleGlassCard GlassRadius="16" IsSheet="True" Width="420"
+                                     PointerPressed="ScanPanel_PointerPressed">
+          <StackPanel Margin="22,20,22,22" Spacing="14">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="Scan for Games" FontSize="17" FontWeight="Bold"
+                         Foreground="{DynamicResource LabelPrimary}" />
+              <Button Grid.Column="1" Click="CloseScan_Click" Classes="iconGhost"
+                      Width="24" Height="24" CornerRadius="12">
+                <Path Classes="icon" Data="{StaticResource IconXmark}" Width="10" Height="10" />
+              </Button>
+            </Grid>
+
+            <TextBlock Name="ScanStatusText" Text="Looking for Steam and Epic Games Launcher libraries..."
+                       FontSize="12" Foreground="{DynamicResource LabelSecondary}" TextWrapping="Wrap" />
+
+            <ScrollViewer MaxHeight="320">
+              <StackPanel Name="ScanResultsPanel" Spacing="2" />
+            </ScrollViewer>
+
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+              <Button Grid.Column="0" Name="ScanSelectAllButton" Content="Select All"
+                      Click="ScanSelectAll_Click" IsVisible="False" />
+              <Button Grid.Column="2" Content="Cancel" Click="CloseScan_Click" Margin="0,0,8,0" />
+              <Button Grid.Column="3" Name="ScanAddSelectedButton" Content="Add Selected"
+                      Classes="primary" Click="AddScannedGames_Click" IsEnabled="False" />
+            </Grid>
+          </StackPanel>
+        </controls:SquircleGlassCard>
+      </Grid>
+    </Border>
+
+    <!-- ===================== ALWAYS-ON-TOP TRAFFIC LIGHTS / DRAG STRIP ===================== -->
+    <!-- Rendered last so it sits above every page and overlay (Game Page, Details editor, etc.),
+         keeping the 3 traffic-light buttons clickable and the window draggable from here
+         no matter what's currently showing underneath. -->
+    <Border Height="52" Width="94" HorizontalAlignment="Left" VerticalAlignment="Top"
+            Background="Transparent" PointerPressed="TitleBar_PointerPressed">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center"
+                  Margin="20,0,0,0" Spacing="8">
+        <Button Click="Close_Click" Classes="traffic traffic-red" Width="12" Height="12" />
+        <Button Click="Minimize_Click" Classes="traffic traffic-yellow" Width="12" Height="12" />
+        <Button Click="Maximize_Click" Classes="traffic traffic-green" Width="12" Height="12" />
+      </StackPanel>
+    </Border>
+
+  </Grid>
+  </Border>
+
+</Window>
